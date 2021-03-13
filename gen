@@ -1,0 +1,26 @@
+#!/bin/bash
+
+MAXCOUNT=100000
+RANGEID=10
+RANGEVALUE=255
+count=1
+
+echo -n > input
+
+while [ "$count" -le $MAXCOUNT ]
+do
+	timestamp=$(date +%s)
+	numberId=$RANDOM
+	numberValue=$RANDOM
+	let "timestamp = timestamp - MAXCOUNT + count"
+	let "numberId %= RANGEID"
+	let "numberValue %= RANGEVALUE" 
+	echo "$numberId, $timestamp, $numberValue" >> input
+	let "count += 1"
+done
+
+echo "Генерация входных данных завершена"
+
+
+
+
