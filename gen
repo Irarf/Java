@@ -4,9 +4,25 @@ MAXCOUNT=100000
 RANGEID=10
 RANGEVALUE=255
 count=1
+echo "Удаление предыдущих файлов"
+echo -n > input.txt
+if hadoop fs -test -e output
+then
+echo "Удаляем output"
+hdfs dfs -rm -r output
+else
+echo "Каталога output не было" 
+fi
 
-echo -n > input
+if hdfs dfs -test -e input/input.txt
+then
+echo "Удаляем input.txt"
+hdfs dfs -rm input/input.txt
+else
+echo "Файла input не было"
+fi
 
+echo "Генерация данных"
 while [ "$count" -le $MAXCOUNT ]
 do
 	timestamp=$(date +%s)
@@ -15,12 +31,13 @@ do
 	let "timestamp = timestamp - MAXCOUNT + count"
 	let "numberId %= RANGEID"
 	let "numberValue %= RANGEVALUE" 
-	echo "$numberId, $timestamp, $numberValue" >> input
+	echo "$numberId, $timestamp, $numberValue" >> input.txt
 	let "count += 1"
 done
 
 echo "Генерация входных данных завершена"
 
-
+echo "Копирование файла в систему hadoop"
+hdfs dfs -put input.txt input
 
 
