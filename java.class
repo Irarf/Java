@@ -55,37 +55,12 @@ public class HW1 {
 
         }
 
-        public IntWritable getTimestamp() {
-            return timestamp;
-        }
-
-        public void setTimestamp(IntWritable timestamp) {
-            this.timestamp = timestamp;
-        }
-
-        public IntWritable getValue() {
-            return value;
-        }
-
-        public void setValue(IntWritable value) {
-            this.value = value;
-        }
 
         public Text getmetricId(){
             return metricId;
         }
 
-        public void setMetricId(Text metricId) {
-            this.metricId = metricId;
-        }
 
-        //Custom Constructor
-        public HW1Writable(Text metricId, IntWritable timestamp, IntWritable value)
-        {
-            this.metricId = metricId;
-            this.timestamp = timestamp;
-            this.value = value;
-        }
 
         //Setter method to set the values of WebLogWritable object
         public void set(Text metricId, IntWritable timestamp, IntWritable value)
@@ -100,46 +75,35 @@ public class HW1 {
 
 
 
-/*
-        @Override
-        public int compareTo(AgregWritable o)
-        {
-            if (metricId.compareTo(o.metricId)==0)
-            {
-                return (timestamp.compareTo(o.timestamp));
-            }
-            else return (metricId.compareTo(o.metricId));
-        }
-*/
-
 
     }
 
 
     public static class HW1Mapper
-            extends Mapper<Object, Text, HW1Writable, IntWritable>{
+            extends Mapper<LongWritable, Text, HW1Writable, IntWritable>{
 
         private static final IntWritable one = new IntWritable();
 
-        private HW1Writable hwLog = new HW1Writable();
-        private IntWritable value = new IntWritable();
-        private IntWritable timestamp = new IntWritable();
+        private final HW1Writable hwLog = new HW1Writable();
+
+        private final IntWritable value = new IntWritable();
+        private final IntWritable timestamp = new IntWritable();
         private Text metricId = new Text();
 
 
 
 
 
-        public void map(Object key, Text values, Context context
+        public void map(LongWritable key, Text values, Context context
         ) throws IOException, InterruptedException {
 
             Scanner scan = new Scanner(new File("/root/laba1/bible"));
-                String s = scan.useDelimiter("\n").next();
+            String s = scan.useDelimiter(",").next();
 
 
             String[] array = s.split("\n");
             String[] words = value.toString().split(",");
-            metricId.set(words[0]);
+            //metricId.set(words[0]);
             Text a1, a2, a3, a4, a5,a6,a7,a8,a9,a0;
             a1 = new Text(array[1]);
             a2 = new Text(array[2]);
@@ -151,36 +115,31 @@ public class HW1 {
             a8 = new Text(array[8]);
             a9 = new Text(array[9]);
             a0 = new Text(array[0]);
-            //String line = value.toString();
-            //String last1 = null;
-            //StringTokenizer s = new StringTokenizer(line,",");
-            //String[] parts = value.toString().split(",");
-            //String id = s.nextToken();
 
-                if ("1".equals(metricId)) {
-                    metricId = a1;
-                } else if ("2".equals(metricId)) {
-                    metricId = a2;
-                } else if ("3".equals(metricId)) {
-                    metricId = a3;
-                } else if ("4".equals(metricId)) {
-                    metricId = a4;
-                } else if ("5".equals(metricId)) {
-                    metricId = a5;
-                } else if ("6".equals(metricId)) {
-                    metricId = a6;
-                } else if ("7".equals(metricId)) {
-                    metricId = a7;
-                } else if ("8".equals(metricId)) {
-                    metricId = a8;
-                } else if ("9".equals(metricId)) {
-                    metricId = a9;
-                } else {
-                    metricId = a0;
-                }
-        timestamp.set(Integer.parseInt(words[1]));
-        value.set(Integer.parseInt(words[2]));
-                hwLog.set(metricId,timestamp,value);
+            if ("1".equals(words[1])) {
+                metricId = a1;
+            } else if ("2".equals(words[2])) {
+                metricId = a2;
+            } else if ("3".equals(words[3])) {
+                metricId = a3;
+            } else if ("4".equals(words[4])) {
+                metricId = a4;
+            } else if ("5".equals(words[5])) {
+                metricId = a5;
+            } else if ("6".equals(words[6])) {
+                metricId = a6;
+            } else if ("7".equals(words[7])) {
+                metricId = a7;
+            } else if ("8".equals(words[8])) {
+                metricId = a8;
+            } else if ("9".equals(words[9])) {
+                metricId = a9;
+            } else {
+                metricId = a0;
+            }
+            timestamp.set(Integer.parseInt(words[1]));
+            value.set(Integer.parseInt(words[2]));
+            hwLog.set(metricId,timestamp,value);
 
             //int values = Integer.parseInt(last1);
             context.write(hwLog, one);
@@ -190,20 +149,20 @@ public class HW1 {
 
     public static class HW1Reducer
             extends Reducer<HW1Writable,IntWritable,Text,IntWritable> {
-        private IntWritable result = new IntWritable();
+        private final IntWritable result = new IntWritable();
         private Text Id = new Text();
 
         public void reduce(HW1Writable key, Iterable<IntWritable> values,
                            Context context
         ) throws IOException, InterruptedException {
-                int sum = 0;
-                Id = key.getmetricId();
+            int sum = 0;
+            Id = key.getmetricId();
             for (IntWritable val:values) {
                 sum++;
 
             }
             result.set(sum);
-                context.write(Id, result);
+            context.write(Id, result);
 
         }
     }
@@ -223,8 +182,8 @@ public class HW1 {
 
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
-       // job.setInputFormatClass(KeyValueTextInputFormat.class);
-      //  job.setOutputFormatClass(TextOutputFormat.class);
+        // job.setInputFormatClass(KeyValueTextInputFormat.class);
+        //  job.setOutputFormatClass(TextOutputFormat.class);
 
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
