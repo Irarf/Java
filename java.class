@@ -23,8 +23,7 @@ public class HW1 {
 
         ArrayList<String> list = new ArrayList<>();
 
-        public void map(Object key, Text value, Context context
-        ) throws IOException, InterruptedException {
+        public void setup (Context context) throws IOException{
             try(Scanner scan = new Scanner(new File("/root/laba1/bible"))){
                 while (scan.hasNextLine()){
                     list.add(scan.nextLine());
@@ -33,6 +32,11 @@ public class HW1 {
             } catch (FileNotFoundException e){
                 e.printStackTrace();
             }
+        }
+
+        public void map(Object key, Text value, Context context
+        ) throws IOException, InterruptedException {
+
 
             String[] array = list.toArray(new String[0]);
             String line = value.toString();
@@ -42,22 +46,42 @@ public class HW1 {
             //String[] parts = value.toString().split(",");
             String id = s.nextToken();
 
+            switch (id) {
+                case "1":
+                    id = array[1];
+                    break;
+                case "2":
+                    id = array[2];
+                    break;
+                case "3":
+                    id = array[3];
+                    break;
+                case "4":
+                    id = array[4];
+                    break;
+                case "5":
+                    id = array[5];
+                    break;
+                case "6":
+                    id = array[6];
+                    break;
+                case "7":
+                    id = array[7];
+                    break;
+                case "8":
+                    id = array[8];
+                    break;
+                case "9":
+                    id = array[9];
+                    break;
+                default:
+                    id = array[0];
+                    break;
+            }
 
-            id = id.equals("1") ? array[0] :
-             id.equals("2") ? array[1] :
-                    id.equals("3") ? array[2] :
-                            id.equals("4") ? array[3] :
-                                    id.equals("5") ? array[4] :
-                                            id.equals("6") ? array[5] :
-                                                    id.equals("7") ? array[6] :
-                                                            id.equals("8") ? array[7] :
-                                                                    id.equals("9") ? array[8] :
-                                                                            id.equals("10") ? array[9] :
-                                                                                        "error";
-            while (s.hasMoreTokens()){
 
                 last1 = s.nextToken();
-            }
+
             int values = Integer.parseInt(last1);
             context.write(new Text(id), new IntWritable(values));
 
@@ -91,7 +115,10 @@ public class HW1 {
     }
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "word count");
+
+        conf.set("mapred.textoutputformat.separator", ",");
+
+        Job job = Job.getInstance(conf, "HW1");
         job.setJarByClass(HW1.class);
 
         job.setMapperClass(TokenizerMapper.class);
@@ -100,6 +127,7 @@ public class HW1 {
 
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
+
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
