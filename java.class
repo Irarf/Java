@@ -31,7 +31,6 @@ public class HW1 {
         {
             this.metricId = new Text();
             this.timestamp = new Text();
-            this.value = new IntWritable();
         }
 
         @Override
@@ -40,7 +39,6 @@ public class HW1 {
         {
             metricId.write(out);
             timestamp.write(out);
-            value.write(out);
             //Вот тут можно добавить цикл на обработку
         }
 
@@ -51,8 +49,6 @@ public class HW1 {
         {
             metricId.readFields(in);
             timestamp.readFields(in);
-            value.readFields(in);
-
         }
 
 
@@ -67,11 +63,10 @@ public class HW1 {
 
 
         //Setter method to set the values of WebLogWritable object
-        public void set(Text metricId, Text timestamp, IntWritable value)
+        public void set(Text metricId, Text timestamp)
         {
             this.metricId = metricId;
             this.timestamp = timestamp;
-            this.value = value;
         }
 
         @Override
@@ -87,7 +82,7 @@ public class HW1 {
     public static class HW1Mapper
             extends Mapper<LongWritable, Text, HW1Writable, IntWritable>{
 
-        private static IntWritable one = new IntWritable(1);
+        //private static IntWritable one = new IntWritable(1);
 
         private HW1Writable hwLog = new HW1Writable();
 
@@ -144,10 +139,10 @@ public class HW1 {
             }*/
             timestamp.set(words[1]);
             value.set(Integer.parseInt(words[2]));
-            hwLog.set(metricId,timestamp,value);
+            hwLog.set(metricId,timestamp);
 
             //int values = Integer.parseInt(last1);
-            context.write(hwLog, one);
+            context.write(hwLog, value);
 
         }
     }
@@ -156,16 +151,16 @@ public class HW1 {
             extends Reducer<HW1Writable,IntWritable,Text,IntWritable> {
         private IntWritable result = new IntWritable();
         private Text Id = new Text();
-        private IntWritable value = new IntWritable();
+        //private IntWritable value = new IntWritable();
 
         public void reduce(HW1Writable key, Iterable<IntWritable> values,
                            Context context
         ) throws IOException, InterruptedException {
             int sum = 0;
             Id = key.getmetricId();
-            value = values.getvalue();
+            //value = values.getvalue();
             for (IntWritable ignored :values) {
-                sum++;
+                sum +=ignored.get();
 
             }
             result.set(sum);
