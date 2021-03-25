@@ -9,108 +9,168 @@ import java.util.StringTokenizer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 public class HW1 {
 
-    public static class TokenizerMapper
-            extends Mapper<Object, Text, Text, IntWritable>{
+    public static class HW1Writable implements WritableComparable<HW1Writable>
+    {
+        private Text metricId;
+        private Text timestamp;
+        private IntWritable value;
 
-        ArrayList<String> list = new ArrayList<>();
-
-        public void setup (Context context) throws IOException{
-            try(Scanner scan = new Scanner(new File("/root/laba1/bible"))){
-                while (scan.hasNextLine()){
-                    list.add(scan.nextLine());
-                }
-
-            } catch (FileNotFoundException e){
-                e.printStackTrace();
-            }
+        //Default Constructor
+        public HW1Writable()
+        {
+            this.metricId = new Text();
+            this.timestamp = new Text();
+            this.value = new IntWritable();
         }
 
-        public void map(Object key, Text value, Context context
+        @Override
+        //It serializes object data into byte stream data
+        public void write(DataOutput out) throws IOException
+        {
+            metricId.write(out);
+            timestamp.write(out);
+            value.write(out);
+            //Вот тут можно добавить цикл на обработку
+        }
+
+        @Override
+        //overriding default readFields method.
+        //It de-serializes the byte stream data
+        public void readFields(DataInput in) throws IOException
+        {
+            metricId.readFields(in);
+            timestamp.readFields(in);
+            value.readFields(in);
+
+        }
+
+
+        public Text getmetricId()
+        {
+            return metricId;
+        }
+        public IntWritable getvalue()
+        {
+            return value;
+        }
+
+
+        //Setter method to set the values of WebLogWritable object
+        public void set(Text metricId, Text timestamp, IntWritable value)
+        {
+            this.metricId = metricId;
+            this.timestamp = timestamp;
+            this.value = value;
+        }
+
+        @Override
+        public int compareTo(HW1Writable o) {
+            if (metricId.compareTo(o.metricId) == 0){
+                return (timestamp.compareTo(o.timestamp));
+            }
+            else return (metricId.compareTo(o.metricId));
+        }
+    }
+
+
+    public static class HW1Mapper
+            extends Mapper<LongWritable, Text, HW1Writable, IntWritable>{
+
+        private static IntWritable one = new IntWritable(1);
+
+        private HW1Writable hwLog = new HW1Writable();
+
+        private IntWritable value = new IntWritable();
+        private Text timestamp = new Text();
+        private Text metricId = new Text();
+
+
+
+
+
+        public void map(LongWritable key, Text values, Context context
         ) throws IOException, InterruptedException {
 
-
-            String[] array = list.toArray(new String[0]);
-            String line = value.toString();
-            String last1 = null;
-            String time = null;
-            StringTokenizer s = new StringTokenizer(line,",");
-            //String[] parts = value.toString().split(",");
-            String id = s.nextToken();
-
-            switch (id) {
-                case "1":
-                    id = array[1];
-                    break;
-                case "2":
-                    id = array[2];
-                    break;
-                case "3":
-                    id = array[3];
-                    break;
-                case "4":
-                    id = array[4];
-                    break;
-                case "5":
-                    id = array[5];
-                    break;
-                case "6":
-                    id = array[6];
-                    break;
-                case "7":
-                    id = array[7];
-                    break;
-                case "8":
-                    id = array[8];
-                    break;
-                case "9":
-                    id = array[9];
-                    break;
-                default:
-                    id = array[0];
-                    break;
-            }
+            //Scanner scan = new Scanner(new File("/root/laba1/bible"));
+            //String s = scan.useDelimiter(",").next();
 
 
-                last1 = s.nextToken();
+            //String[] array = s.split(",");
+            String[] words = values.toString().split(",");
+            metricId.set(words[0]);
+           /* Text a1, a2, a3, a4, a5,a6,a7,a8,a9,a0;
+            a1 = new Text(array[1]);
+            a2 = new Text(array[2]);
+            a3 = new Text(array[3]);
+            a4 = new Text(array[4]);
+            a5 = new Text(array[5]);
+            a6 = new Text(array[6]);
+            a7 = new Text(array[7]);
+            a8 = new Text(array[8]);
+            a9 = new Text(array[9]);
+            a0 = new Text(array[0]);
 
-            int values = Integer.parseInt(last1);
-            context.write(new Text(id), new IntWritable(values));
+            if ("1".equals(words[1])) {
+                metricId = a1;
+            } else if ("2".equals(words[2])) {
+                metricId = a2;
+            } else if ("3".equals(words[3])) {
+                metricId = a3;
+            } else if ("4".equals(words[4])) {
+                metricId = a4;
+            } else if ("5".equals(words[5])) {
+                metricId = a5;
+            } else if ("6".equals(words[6])) {
+                metricId = a6;
+            } else if ("7".equals(words[7])) {
+                metricId = a7;
+            } else if ("8".equals(words[8])) {
+                metricId = a8;
+            } else if ("9".equals(words[9])) {
+                metricId = a9;
+            } else {
+                metricId = a0;
+            }*/
+            timestamp.set(words[1]);
+            value.set(Integer.parseInt(words[2]));
+            hwLog.set(metricId,timestamp,value);
+
+            //int values = Integer.parseInt(last1);
+            context.write(hwLog, one);
 
         }
     }
 
-    public static class IntSumReducer
-            extends Reducer<Text,IntWritable,Text,IntWritable> {
+    public static class HW1Reducer
+            extends Reducer<HW1Writable,IntWritable,Text,IntWritable> {
         private IntWritable result = new IntWritable();
+        private Text Id = new Text();
+        private IntWritable value = new IntWritable();
 
-        public void reduce(Text key, Iterable<IntWritable> values,
+        public void reduce(HW1Writable key, Iterable<IntWritable> values,
                            Context context
         ) throws IOException, InterruptedException {
-            if (key.equals("error")){
-                int countEr = 0;
-                countEr++;
-                result.set(countEr);
-                context.write(key, result);
-            }else {
-                int countV = 0;
-                int sum = 0;
-                for (IntWritable val : values) {
-                    sum += val.get();
-                    countV++;
-                }
-                sum = sum / countV;
-                result.set(sum);
-                context.write(key, result);
+            int sum = 0;
+            Id = key.getmetricId();
+            value = values.getvalue();
+            for (IntWritable ignored :values) {
+                sum++;
+
             }
+            result.set(sum);
+            context.write(Id, result);
+
         }
     }
     public static void main(String[] args) throws Exception {
@@ -121,12 +181,16 @@ public class HW1 {
         Job job = Job.getInstance(conf, "HW1");
         job.setJarByClass(HW1.class);
 
-        job.setMapperClass(TokenizerMapper.class);
-        job.setCombinerClass(IntSumReducer.class);
-        job.setReducerClass(IntSumReducer.class);
+        job.setMapperClass(HW1Mapper.class);
+        //job.setCombinerClass(HW1Reducer.class);
+        job.setReducerClass(HW1Reducer.class);
+        job.setMapOutputKeyClass(HW1Writable.class);
+        job.setMapOutputValueClass(IntWritable.class);
 
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
+        // job.setInputFormatClass(KeyValueTextInputFormat.class);
+        //  job.setOutputFormatClass(TextOutputFormat.class);
 
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
