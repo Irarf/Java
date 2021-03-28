@@ -1,52 +1,53 @@
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.*;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.io.Text;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
-public class wordcount
-{
+public class HW1 {
 
-    public static class AgregWritable implements WritableComparable<AgregWritable>
+    public static class HW1Writable implements WritableComparable<HW1Writable>
     {
         private Text metricId;
-        private IntWritable timestamp;
+        private Text timestamp;
         private IntWritable value;
 
         //Default Constructor
-        public AgregWritable()
+        public HW1Writable()
         {
             this.metricId = new Text();
-            this.timestamp = new IntWritable();
+            this.timestamp = new Text();
             this.value = new IntWritable();
         }
-
-        //Custom Constructor
-        public AgregWritable(Text metricId, IntWritable timestamp, IntWritable value)
+        public HW1Writable(Text metric, Text ts, IntWritable v)
         {
-            this.metricId = metricId;
-            this.timestamp = timestamp;
-            this.value = value;
+            this.metricId = metric;
+            this.timestamp = ts;
+            this.value = v;
         }
 
-        //Setter method to set the values of WebLogWritable object
-        public void set(Text metricId, IntWritable timestamp, IntWritable value)
+        @Override
+        //It serializes object data into byte stream data
+        public void write(DataOutput out) throws IOException
         {
-            this.metricId = metricId;
-            this.timestamp = timestamp;
-            this.value = value;
-        }
-
-        public Text getIp()
-        {
-            return metricId;
+            metricId.write(out);
+            timestamp.write(out);
+            value.write(out);
+            //Вот тут можно добавить цикл на обработку
         }
 
         @Override
@@ -57,93 +58,190 @@ public class wordcount
             metricId.readFields(in);
             timestamp.readFields(in);
             value.readFields(in);
+        }
 
+
+        public Text getmetricId()
+        {
+            return metricId;
+        }
+        public Text getTimestamp()
+        {
+            return timestamp;
+        }
+        public IntWritable getvalue()
+        {
+            return value;
+        }
+
+
+        //Setter method to set the values of WebLogWritable object
+        public void set(Text metricId, Text timestamp)
+        {
+            this.metricId = metricId;
+            this.timestamp = timestamp;
         }
 
         @Override
-        //It serializes object data into byte stream data
-        public void write(DataOutput out) throws IOException
-        {
-            metricId.write(out);
-            timestamp.write(out);
-            value.write(out);
-        }
-
-        @Override
-        public int compareTo(AgregWritable o)
-        {
-            if (metricId.compareTo(o.metricId)==0)
-            {
+        public int compareTo(HW1Writable o) {
+            if (metricId.compareTo(o.metricId) == 0){
                 return (timestamp.compareTo(o.timestamp));
             }
             else return (metricId.compareTo(o.metricId));
         }
-
-
-
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o instanceof HW1Writable){
+            HW1Writable other = (HW1Writable) o;
+            return metricId.equals(other.metricId) && timestamp.equals(other.timestamp);
+        }
+            return false;
+        }
+        @Override
+        public int hashCode()
+        {
+            return metricId.hashCode();
+        }
     }
 
 
-    public static class TokenizerMapper
-            extends Mapper<Object, Text, AgregWritable, IntWritable>{
+    public static class HW1Mapper
+            extends Mapper<LongWritable, Text, HW1Writable, IntWritable>{
 
-        private final static IntWritable one = new IntWritable(1);
-        //private Text word = new Text();
+        //private static IntWritable one = new IntWritable(1);
 
-        public void map(Object key, Text value, Context context
+        private HW1Writable hwLog = new HW1Writable();
+
+        private IntWritable value = new IntWritable();
+        private Text timestamp = new Text();
+        private Text metricId = new Text();
+        //private String dimension;
+
+
+
+
+        public void map(LongWritable key, Text values, Context context
         ) throws IOException, InterruptedException {
 
-            String line = value.toString();
+           // Scanner scan = new Scanner(new File("/root/laba1/bible"));
+           // String s = scan.useDelimiter(",").next();
+//
+            long tmp = 0;
+            Long y = new Long(tmp);
+           // dimension = context.getConfiguration().get("dimension");
+          //  String[] array = s.split(",");
+            String[] words = values.toString().split(",");
+            metricId.set(words[0]);
+           /* Text a1, a2, a3, a4, a5,a6,a7,a8,a9,a0;
+            a1 = new Text(array[1]);
+            a2 = new Text(array[2]);
+            a3 = new Text(array[3]);
+            a4 = new Text(array[4]);
+            a5 = new Text(array[5]);
+            a6 = new Text(array[6]);
+            a7 = new Text(array[7]);
+            a8 = new Text(array[8]);
+            a9 = new Text(array[9]);
+            a0 = new Text(array[0]);
 
-            //StringTokenizer itr = new StringTokenizer(line,",");
-          //  String id = itr.nextToken();
-            int time;
+            if ("1".equals(words[0])) {
+                metricId = a1;
+            } else if ("2".equals(words[0])) {
+                metricId = a2;
+            } else if ("3".equals(words[0])) {
+                metricId = a3;
+            } else if ("4".equals(words[0])) {
+                metricId = a4;
+            } else if ("5".equals(words[0])) {
+                metricId = a5;
+            } else if ("6".equals(words[0])) {
+                metricId = a6;
+            } else if ("7".equals(words[0])) {
+                metricId = a7;
+            } else if ("8".equals(words[0])) {
+                metricId = a8;
+            } else if ("9".equals(words[0])) {
+                metricId = a9;
+            } else {
+                metricId = a0;
+            }*/
+            timestamp.set(words[1]);
 
-           // context.write(new Text(id), one);
+            y = Long.parseUnsignedLong(String.valueOf(timestamp));
+           // if ("s".equals(dimension) )
+            //    y = y - (y % 1000);
+           // else if ("m".equals(dimension) )
+                y = y - (y % 60000);
+           // else if ("h".equals(dimension) )
+           //     y = y - (y % 3600000);
 
+            String strLong = Long.toString(y);
+
+            timestamp.set(strLong);
+            value.set(Integer.parseInt(words[2]));
+            hwLog.set(metricId,timestamp);
+            //System.out.println("t= "+ timestamp);
+            //int values = Integer.parseInt(last1);
+            context.write(hwLog, value);
 
         }
     }
 
-    public static class IntSumReducer
-            extends Reducer<AgregWritable,IntWritable,Text,IntWritable> {
+    public static class HW1Reducer
+            extends Reducer<HW1Writable,IntWritable,Text,IntWritable> {
         private IntWritable result = new IntWritable();
-        private  Text id = new Text();
+        private Text Id = new Text();
+        private Text St = new Text();
+        private Text Cr = new Text();
+        //private IntWritable value = new IntWritable();
 
-        public void reduce(AgregWritable key, Iterable<IntWritable> values,
+        public void reduce(HW1Writable key, Iterable<IntWritable> values,
                            Context context
         ) throws IOException, InterruptedException {
             int sum = 0;
-            id = key.getIp();
-            for (IntWritable val : values) {
-                sum += val.get();
+
+            //value = values.getvalue();
+            for (IntWritable val :values) {
+                sum +=val.get();
+
             }
+            Id = key.getmetricId();
+            St = key.getTimestamp();
+            String test = Id.toString();
+            test +=  ",";
+            test = test.concat(St.toString());
+
+
+          //  hwLog.set(Id, St);
             result.set(sum);
-            context.write(id, result);
+            context.write(new Text(test), result);
+
         }
     }
-
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "word count");
 
-        job.setJarByClass(wordcount.class);
+        conf.set("mapred.textoutputformat.separator", ",");
+        //conf.set("rounding",args[2]);
+        //conf.set("dimension",args[3]);
+        Job job = Job.getInstance(conf, "HW1");
+        job.setJarByClass(HW1.class);
 
-        FileInputFormat.addInputPath(job, new Path(args[0]));
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));
-
-        job.setMapperClass(TokenizerMapper.class);
-        job.setCombinerClass(IntSumReducer.class);
-        job.setReducerClass(IntSumReducer.class);
-
-        job.setMapOutputKeyClass(AgregWritable.class);
-        job.setOutputValueClass(IntWritable.class);
+        job.setMapperClass(HW1Mapper.class);
+        //job.setCombinerClass(HW1Reducer.class);
+        job.setReducerClass(HW1Reducer.class);
+        job.setMapOutputKeyClass(HW1Writable.class);
+        job.setMapOutputValueClass(IntWritable.class);
 
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
+        // job.setInputFormatClass(KeyValueTextInputFormat.class);
+        //  job.setOutputFormatClass(TextOutputFormat.class);
 
 
-
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 }
