@@ -203,17 +203,15 @@ public class HW1 {
             //value = values.getvalue();
             //sum = 0;
             Id = key.getmetricId();
-            test = Id.toString();
             for (IntWritable val :values) {
                 sum +=val.get();
 
             }
-            if (!"error".equals(test)){
+
                 St = key.getTimestamp();
                 test = Id.toString();
                 test += ",";
                 test = test.concat(St.toString());
-            }
             result.set(sum);
             context.write(new Text(test), result);
 
