@@ -23,15 +23,21 @@ public class HW1 {
     public static class HW1Writable implements WritableComparable<HW1Writable>
     {
         private Text metricId;
-        private IntWritable timestamp;
+        private Text timestamp;
         private IntWritable value;
 
         //Default Constructor
         public HW1Writable()
         {
             this.metricId = new Text();
-            this.timestamp = new IntWritable();
+            this.timestamp = new Text();
             this.value = new IntWritable();
+        }
+        public HW1Writable(Text metric, Text ts, IntWritable v)
+        {
+            this.metricId = metric;
+            this.timestamp = ts;
+            this.value = v;
         }
 
         @Override
@@ -52,22 +58,28 @@ public class HW1 {
             metricId.readFields(in);
             timestamp.readFields(in);
             value.readFields(in);
-
         }
 
 
-        public Text getmetricId(){
+        public Text getmetricId()
+        {
             return metricId;
         }
-
+        public Text getTimestamp()
+        {
+            return timestamp;
+        }
+        public IntWritable getvalue()
+        {
+            return value;
+        }
 
 
         //Setter method to set the values of WebLogWritable object
-        public void set(Text metricId, IntWritable timestamp, IntWritable value)
+        public void set(Text metricId, Text timestamp)
         {
             this.metricId = metricId;
             this.timestamp = timestamp;
-            this.value = value;
         }
 
         @Override
@@ -77,18 +89,32 @@ public class HW1 {
             }
             else return (metricId.compareTo(o.metricId));
         }
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o instanceof HW1Writable){
+            HW1Writable other = (HW1Writable) o;
+            return metricId.equals(other.metricId) && timestamp.equals(other.timestamp);
+        }
+            return false;
+        }
+        @Override
+        public int hashCode()
+        {
+            return metricId.hashCode();
+        }
     }
 
 
     public static class HW1Mapper
             extends Mapper<LongWritable, Text, HW1Writable, IntWritable>{
 
-        private static IntWritable one = new IntWritable();
+        //private static IntWritable one = new IntWritable(1);
 
         private HW1Writable hwLog = new HW1Writable();
 
         private IntWritable value = new IntWritable();
-        private IntWritable timestamp = new IntWritable();
+        private Text timestamp = new Text();
         private Text metricId = new Text();
 
 
@@ -98,52 +124,62 @@ public class HW1 {
         public void map(LongWritable key, Text values, Context context
         ) throws IOException, InterruptedException {
 
-            //Scanner scan = new Scanner(new File("/root/laba1/bible"));
+
             //String s = scan.useDelimiter(",").next();
+//
+            ArrayList<String> lines = new ArrayList<>();
+            try(Scanner scan = new Scanner(new File("/root/laba1/bible"))){
+                while(scan.hasNextLine()){
+                    lines.add(scan.nextLine());
+                }
+            }catch (FileNotFoundException e){
+                e.printStackTrace();
+            }
+           String[] array = lines.toArray(new String[0]);
+            long tmp = 0;
+            String[] words = values.toString().split(",");
+            //metricId.set(words[0]);
 
 
-            //String[] array = s.split(",");
-            String[] words = value.toString().split(",");
-            metricId.set(words[0]);
-           /* Text a1, a2, a3, a4, a5,a6,a7,a8,a9,a0;
-            a1 = new Text(array[1]);
-            a2 = new Text(array[2]);
-            a3 = new Text(array[3]);
-            a4 = new Text(array[4]);
-            a5 = new Text(array[5]);
-            a6 = new Text(array[6]);
-            a7 = new Text(array[7]);
-            a8 = new Text(array[8]);
-            a9 = new Text(array[9]);
-            a0 = new Text(array[0]);
 
-            if ("1".equals(words[1])) {
-                metricId = a1;
-            } else if ("2".equals(words[2])) {
-                metricId = a2;
-            } else if ("3".equals(words[3])) {
-                metricId = a3;
-            } else if ("4".equals(words[4])) {
-                metricId = a4;
-            } else if ("5".equals(words[5])) {
-                metricId = a5;
-            } else if ("6".equals(words[6])) {
-                metricId = a6;
-            } else if ("7".equals(words[7])) {
-                metricId = a7;
-            } else if ("8".equals(words[8])) {
-                metricId = a8;
-            } else if ("9".equals(words[9])) {
-                metricId = a9;
+            if ("1".equals(words[0])) {
+                metricId = new Text(array[1]);
+            } else if ("2".equals(words[0])) {
+                metricId = new Text(array[2]);
+            } else if ("3".equals(words[0])) {
+                metricId = new Text(array[3]);
+            } else if ("4".equals(words[0])) {
+                metricId = new Text(array[4]);
+            } else if ("5".equals(words[0])) {
+                metricId = new Text(array[5]);
+            } else if ("6".equals(words[0])) {
+                metricId = new Text(array[6]);
+            } else if ("7".equals(words[0])) {
+                metricId = new Text(array[7]);
+            } else if ("8".equals(words[0])) {
+                metricId = new Text(array[8]);
+            } else if ("9".equals(words[0])) {
+                metricId = new Text(array[9]);
             } else {
-                metricId = a0;
-            }*/
-            timestamp.set(Integer.parseInt(words[1]));
-            value.set(Integer.parseInt(words[2]));
-            hwLog.set(metricId,timestamp,value);
+                metricId = new Text(array[0]);
+            }
+            timestamp.set(words[1]);
+            tmp = Long.parseUnsignedLong(String.valueOf(timestamp));
+            tmp = tmp - (tmp %60000);
+            String strLong = Long.toString(tmp);
+            timestamp.set(strLong);
+            String str;
+            str=metricId.toString();
+            if ("error".equals(str)){
+                value.set(1);
+            }else{
+                value.set(Integer.parseInt(words[2]));
+            }
 
+            hwLog.set(metricId,timestamp);
+            //System.out.println("t= "+ timestamp);
             //int values = Integer.parseInt(last1);
-            context.write(hwLog, one);
+            context.write(hwLog, value);
 
         }
     }
@@ -152,18 +188,34 @@ public class HW1 {
             extends Reducer<HW1Writable,IntWritable,Text,IntWritable> {
         private IntWritable result = new IntWritable();
         private Text Id = new Text();
+        private Text St = new Text();
+        private HW1Writable hwLog = new HW1Writable();
+        //private int sum = new Integer(0);
+       // private int sum1 = new Integer(0);
+        //private IntWritable value = new IntWritable();
 
         public void reduce(HW1Writable key, Iterable<IntWritable> values,
                            Context context
         ) throws IOException, InterruptedException {
             int sum = 0;
+            String test;
+
+            //value = values.getvalue();
+            //sum = 0;
             Id = key.getmetricId();
-            for (IntWritable ignored :values) {
-                sum++;
+            test = Id.toString();
+            for (IntWritable val :values) {
+                sum +=val.get();
 
             }
+            if (!"error".equals(test)){
+                St = key.getTimestamp();
+                test = Id.toString();
+                test += ",";
+                test = test.concat(St.toString());
+            }
             result.set(sum);
-            context.write(Id, result);
+            context.write(new Text(test), result);
 
         }
     }
