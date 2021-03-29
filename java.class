@@ -116,7 +116,7 @@ public class HW1 {
         private IntWritable value = new IntWritable();
         private Text timestamp = new Text();
         private Text metricId = new Text();
-
+        private String intervalCount;
 
 
 
@@ -124,9 +124,11 @@ public class HW1 {
         public void map(LongWritable key, Text values, Context context
         ) throws IOException, InterruptedException {
 
+            String interval = context.getConfiguration().get("interval");
+            String intervalCount = context.getConfiguration().get("intervalCount");
 
-            //String s = scan.useDelimiter(",").next();
-//
+            long intC =Long.parseLong(intervalCount);
+
             ArrayList<String> lines = new ArrayList<>();
             try(Scanner scan = new Scanner(new File("/root/laba1/bible"))){
                 while(scan.hasNextLine()){
@@ -165,7 +167,13 @@ public class HW1 {
             }
             timestamp.set(words[1]);
             tmp = Long.parseUnsignedLong(String.valueOf(timestamp));
-            tmp = tmp - (tmp %60000);
+            if ("s".equals(interval)){
+                tmp = tmp - (tmp % (1000 * intC));
+            }else if ("m".equals(interval)){
+                tmp = tmp - (tmp % (60000 * intC));
+            }else if ("h".equals(interval)){
+                tmp = tmp - (tmp % (3600000 * intC));
+            }
             String strLong = Long.toString(tmp);
             timestamp.set(strLong);
             String str;
@@ -197,6 +205,8 @@ public class HW1 {
         public void reduce(HW1Writable key, Iterable<IntWritable> values,
                            Context context
         ) throws IOException, InterruptedException {
+            String interval = context.getConfiguration().get("interval");
+            String intervalCount = context.getConfiguration().get("intervalCount");
             int sum = 0;
             String test;
 
@@ -212,6 +222,7 @@ public class HW1 {
                 test = Id.toString();
                 test += ",";
                 test = test.concat(St.toString());
+            test += "," +intervalCount + interval;
             result.set(sum);
             context.write(new Text(test), result);
 
@@ -222,6 +233,8 @@ public class HW1 {
 
         conf.set("mapred.textoutputformat.separator", ",");
 
+        conf.set("intervalCount",args[2]);
+        conf.set("interval",args[3]);
         Job job = Job.getInstance(conf, "HW1");
         job.setJarByClass(HW1.class);
 
