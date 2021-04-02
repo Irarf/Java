@@ -19,7 +19,7 @@ public class MapperTest {
 
     private MapDriver<LongWritable, Text, HW1Writable, IntWritable> mapDriver;
     private ReduceDriver<HW1Writable, IntWritable, Text,IntWritable> reduceDriver;
-
+    private MapReduceDriver<LongWritable, Text, HW1Writable, IntWritable, Text, IntWritable> mapReduceDriver;
 
     private final String testIP = "4,1617136468619,49";
 
@@ -30,24 +30,32 @@ public class MapperTest {
         HW1Reducer reducer = new HW1Reducer();
         mapDriver = MapDriver.newMapDriver(mapper);
         reduceDriver = ReduceDriver.newReduceDriver(reducer);
+        mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, reducer);
     }
 
     @Test
     public void testMapper() throws IOException {
         mapDriver
-                .withInput(new LongWritable(1), new Text(testIP))
+                .withInput(new LongWritable(), new Text(testIP))
                 .withOutput(new HW1Writable(new Text("4"),new Text("1617136468619")), new IntWritable(49))
                 .runTest();
     }
     @Test
     public void testReducer() throws IOException {
         List<IntWritable> values = new ArrayList<>();
-        values.add(new IntWritable(2));
-        values.add(new IntWritable(1));
+        values.add(new IntWritable(49));
+       // values.add(new IntWritable(1));
         reduceDriver
-                .withInput(new HW1Writable(new Text("4"),new Text("1617136468619")), values)
-                .withOutput(new Text("4,1617136468619,1m"), new IntWritable(49))
+                .withInput(new HW1Writable(new Text("4"),new Text("1617136468000")), values)
+                .withOutput(new Text("4,1617136468000,nullnull"), new IntWritable(49))
                 .runTest();
     }
 
+    @Test
+    public void testMapReduce() throws IOException {
+        mapReduceDriver
+                .withInput(new LongWritable(), new Text(testIP))
+                .withOutput(new Text("4,1617136468000,nullnull"), new IntWritable(49))
+                .runTest();
+    }
 }
