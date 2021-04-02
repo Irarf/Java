@@ -1,0 +1,55 @@
+#!/bin/bash
+
+MAXCOUNT=$1
+
+echo "MACXOUNT $1"
+RANGEID=15
+RANGEVALUE=255
+count=1
+echo "Удаление предыдущих файлов"
+echo -n > input
+if hdfs dfs -test -e output
+then
+echo "Удаляем output"
+hdfs dfs -rm -r output
+else
+echo "Каталога output не было" 
+fi
+
+if hdfs dfs -test -e input/input
+then
+echo "Удаляем input"
+hdfs dfs -rm input/input
+else
+echo "Файла input не было"
+fi
+
+echo "Генерация данных"
+while [ "$count" -le $MAXCOUNT ]
+do
+	timestamp=$(date '+%s%3N')
+	#echo $(($(date '+%s%n') / 10000000))
+	numberId=$RANDOM
+	numberValue=$RANDOM
+	let "timestamp = timestamp - MAXCOUNT + count"
+	let "numberId %= RANGEID"
+	let "numberValue %= RANGEVALUE" 
+	echo "$numberId,$timestamp,$numberValue" >> input
+	let "count += 1"
+done
+
+echo "Генерация входных данных завершена"
+
+echo "Копирование файла в систему hadoop"
+hdfs dfs -put -f input input
+
+echo "Запуск программы"
+yarn jar /root/IdeaProjects/Laba1/target/Laba1-1.0-SNAPSHOT.jar laba1.MapReduceApplication $2 $3 $4 $5
+
+echo 'Result'
+hadoop fs -cat output/part-r-00000
+# > ~/output/output.csv
+#hadoop fs -cat output/output.csv
+
+
+
